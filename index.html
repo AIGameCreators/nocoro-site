@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nocoro / ノコロ — PCのすみっこに暮らす、小さな住人AI</title>
+  <meta name="description" content="Nocoro（ノコロ）は、PCのデスクトップのすみで短く反応し、必要なときだけ画面を見てもらい、今日の観察メモを残せる、常駐型の住人AIアプリです。">
+  
+  <!-- SEO & Omit Indexing if needed, but standard OpenGraph is good -->
+  <meta property="og:title" content="Nocoro / ノコロ — PCのすみっこに暮らす、小さな住人AI">
+  <meta property="og:description" content="デスクトップのすみっこで短く反応し、必要なときだけ見守る。あなたとゆるやかに暮らす、小さな住人AI。">
+  <meta property="og:image" content="assets/nocoro-icon-1024.png">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/nocoro-icon-1024.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* CSS Custom Properties / Design System */
+    :root {
+      --color-bg-gradient-start: #eef5fc;
+      --color-bg-gradient-end: #f8fafc;
+      --color-sky-blue: #6495ED;
+      --color-sky-blue-light: rgba(100, 149, 237, 0.08);
+      --color-cream: #fdfaf2;
+      --color-cream-border: #f5edd6;
+      --color-white: #ffffff;
+      --color-text-dark: #2c3e50;
+      --color-text-muted: #5e6e7f;
+      --color-accent-orange: #ffb84d;
+      --color-accent-orange-hover: #ffa826;
+      --color-accent-green: #7cb342;
+      --color-shadow: rgba(100, 149, 237, 0.12);
+      
+      --font-primary: 'Zen Maru Gothic', 'Outfit', sans-serif;
+    }
+
+    /* Reset & Base Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      color: var(--color-text-dark);
+      background: linear-gradient(135deg, var(--color-bg-gradient-start) 0%, var(--color-bg-gradient-end) 100%);
+      background-attachment: fixed;
+      line-height: 1.7;
+      overflow-x: hidden;
+      font-size: 16px;
+    }
+
+    a {
+      color: var(--color-sky-blue);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    a:hover {
+      color: var(--color-accent-orange);
+    }
+
+    /* Layout Containers */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header Navigation */
+    header {
+      padding: 24px 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .header-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: var(--color-text-dark);
+    }
+
+    .brand-logo img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .nav-link {
+      font-weight: 500;
+      color: var(--color-text-muted);
+      position: relative;
+      padding: 4px 0;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--color-sky-blue);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .nav-link:hover {
+      color: var(--color-sky-blue);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 60px 0 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-avatar-area {
+      position: relative;
+      margin-bottom: 40px;
+    }
+
+    /* Floating character container */
+    .hero-avatar-wrapper {
+      width: 180px;
+      height: 180px;
+      border-radius: 45px;
+      background: var(--color-cream);
+      border: 3px solid var(--color-cream-border);
+      box-shadow: 0 15px 35px var(--color-shadow);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      animation: float 5s ease-in-out infinite;
+      overflow: hidden;
+    }
+
+    .hero-avatar-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Intermittent speech balloon from the resident */
+    .speech-balloon {
+      position: absolute;
+      top: -20px;
+      left: 170px;
+      background: var(--color-white);
+      border: 2px solid var(--color-cream-border);
+      border-radius: 20px;
+      padding: 12px 20px;
+      max-width: 250px;
+      box-shadow: 0 8px 20px rgba(100, 149, 237, 0.1);
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: var(--color-text-dark);
+      text-align: left;
+      opacity: 0;
+      transform: scale(0.8) translate(-10px, 10px);
+      transform-origin: bottom left;
+      animation: popBalloon 12s ease-in-out infinite;
+      white-space: nowrap;
+    }
+
+    .speech-balloon::before {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 20px;
+      border-width: 10px 10px 0 0;
+      border-style: solid;
+      border-color: var(--color-white) transparent;
+      display: block;
+      width: 0;
+      z-index: 2;
+    }
+
+    .speech-balloon::after {
+      content: '';
+      position: absolute;
+      bottom: -13px;
+      left: 19px;
+      border-width: 11px 11px 0 0;
+      border-style: solid;
+      border-color: var(--color-cream-border) transparent;
+      display: block;
+      width: 0;
+      z-index: 1;
+    }
+
+    .hero-tag {
+      background: var(--color-sky-blue-light);
+      color: var(--color-sky-blue);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      display: inline-block;
+      letter-spacing: 0.05em;
+    }
+
+    .hero-title {
+      font-size: 3.2rem;
+      font-weight: 900;
+      margin-bottom: 20px;
+      line-height: 1.25;
+      color: var(--color-text-dark);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-title span {
+      background: linear-gradient(120deg, var(--color-sky-blue) 0%, var(--color-accent-orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-description {
+      font-size: 1.25rem;
+      max-width: 680px;
+      margin: 0 auto 36px;
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 16px 36px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-accent-orange) 0%, #ff9e1b 100%);
+      color: var(--color-white);
+      box-shadow: 0 10px 25px rgba(255, 160, 27, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px rgba(255, 160, 27, 0.4);
+      color: var(--color-white);
+    }
+
+    .btn-secondary {
+      background: var(--color-white);
+      color: var(--color-text-dark);
+      border: 2px solid var(--color-cream-border);
+      box-shadow: 0 4px 12px rgba(100, 149, 237, 0.05);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-3px);
+      border-color: var(--color-sky-blue);
+      box-shadow: 0 8px 20px rgba(100, 149, 237, 0.1);
+      color: var(--color-sky-blue);
+    }
+
+    .hero-meta {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Showcase Section (Feature Grid) */
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: var(--color-text-muted);
+      margin-bottom: 50px;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      margin-bottom: 80px;
+    }
+
+    .feature-card {
+      background: var(--color-white);
+      border-radius: 28px;
+      padding: 36px;
+      box-shadow: 0 15px 35px var(--color-shadow);
+      border: 1px solid rgba(100, 149, 237, 0.05);
+      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 25px 50px rgba(100, 149, 237, 0.18);
+    }
+
+    .feature-icon-wrapper {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--color-sky-blue-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+      color: var(--color-sky-blue);
+      font-size: 1.5rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--color-text-dark);
+    }
+
+    .feature-card p {
+      color: var(--color-text-muted);
+      margin-bottom: 24px;
+      font-size: 0.98rem;
+    }
+
+    .feature-image-wrapper {
+      margin-top: auto;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid var(--color-cream-border);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      background: var(--color-cream);
+    }
+
+    .feature-image-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+
+    .feature-card:hover .feature-image-wrapper img {
+      transform: scale(1.03);
+    }
+
+    /* Grid configuration for full-width highlights */
+    .features-grid-full {
+      grid-column: span 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    /* Safety & Privacy Section */
+    .safety-section {
+      background: var(--color-cream);
+      border-radius: 32px;
+      border: 2px solid var(--color-cream-border);
+      padding: 60px;
+      margin-bottom: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .safety-section::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,184,77,0.12) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+
+    .safety-section-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      margin-bottom: 36px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .safety-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+    }
+
+    .safety-item {
+      display: flex;
+      gap: 16px;
+      background: var(--color-white);
+      padding: 24px;
+      border-radius: 20px;
+      border: 1px solid var(--color-cream-border);
+      box-shadow: 0 4px 12px rgba(220, 200, 160, 0.05);
+    }
+
+    .safety-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      background: rgba(124, 179, 66, 0.08);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--color-accent-green);
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .safety-content h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .safety-content p {
+      font-size: 0.92rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    /* Download & Spec info card */
+    .download-card {
+      background: linear-gradient(135deg, var(--color-white) 0%, #fdfcf8 100%);
+      border-radius: 28px;
+      padding: 48px;
+      box-shadow: 0 20px 45px var(--color-shadow);
+      border: 1px solid rgba(100, 149, 237, 0.05);
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .download-card h2 {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .download-card p.subtitle {
+      color: var(--color-text-muted);
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .spec-badges {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .spec-badge {
+      background: var(--color-bg-gradient-start);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--color-text-dark);
+      border: 1px solid rgba(100, 149, 237, 0.1);
+    }
+
+    /* Footer area */
+    footer {
+      border-top: 1px solid rgba(100, 149, 237, 0.1);
+      padding: 40px 0;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .footer-links a {
+      color: var(--color-text-muted);
+    }
+
+    .footer-links a:hover {
+      color: var(--color-sky-blue);
+    }
+
+    footer p.copyright {
+      font-size: 0.88rem;
+      color: var(--color-text-muted);
+    }
+
+    /* Keyframes animations */
+    @keyframes float {
+      0% {
+        transform: translateY(0px) rotate(0deg);
+        box-shadow: 0 15px 35px var(--color-shadow);
+      }
+      50% {
+        transform: translateY(-8px) rotate(0.5deg);
+        box-shadow: 0 25px 40px rgba(100, 149, 237, 0.18);
+      }
+      100% {
+        transform: translateY(0px) rotate(0deg);
+        box-shadow: 0 15px 35px var(--color-shadow);
+      }
+    }
+
+    @keyframes popBalloon {
+      0%, 15%, 85%, 100% {
+        opacity: 0;
+        transform: scale(0.8) translate(-10px, 10px);
+        pointer-events: none;
+      }
+      20%, 80% {
+        opacity: 1;
+        transform: scale(1) translate(0px, 0px);
+        pointer-events: auto;
+      }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      .features-grid-full {
+        grid-column: span 1;
+        grid-template-columns: 1fr;
+      }
+      .safety-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      .speech-balloon {
+        left: 50%;
+        top: -65px;
+        transform: translateX(-50%) scale(0.8) !important;
+        transform-origin: bottom center;
+        animation: popBalloonMobile 12s ease-in-out infinite;
+        max-width: 280px;
+      }
+      .speech-balloon::before {
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 10px 10px 0 10px;
+        border-color: var(--color-white) transparent transparent transparent;
+      }
+      .speech-balloon::after {
+        bottom: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 11px 11px 0 11px;
+        border-color: var(--color-cream-border) transparent transparent transparent;
+      }
+      .safety-section {
+        padding: 40px 24px;
+      }
+    }
+
+    @keyframes popBalloonMobile {
+      0%, 15%, 85%, 100% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8);
+        pointer-events: none;
+      }
+      20%, 80% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+        pointer-events: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="container header-nav">
+      <div class="brand-logo">
+        <img src="assets/nocoro-icon-1024.png" alt="Nocoro Logo">
+        <span>Nocoro</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#features" class="nav-link">特徴</a>
+        <a href="#safety" class="nav-link">安心の設計</a>
+        <a href="#download" class="nav-link">ダウンロード</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero container">
+    <div class="hero-avatar-area">
+      <div class="hero-avatar-wrapper">
+        <img src="assets/nocoro-icon-1024.png" alt="Nocoro Avatar">
+      </div>
+      <!-- Intermittent comments in bubble -->
+      <div class="speech-balloon" id="baloon-text">
+        ねえねえ、今日も作る日っぽいね
+      </div>
+    </div>
+
+    <span class="hero-tag">Windows デスクトップ常駐型 AI</span>
+    <h1 class="hero-title">PCのすみっこに暮らす、<br><span>小さな住人AI</span></h1>
+    <p class="hero-description">
+      Nocoro / ノコロ は、クリックや時間帯、作業の区切りにあわせて短く反応し、<br>
+      あなたの気配をゆるやかに見守りながら、今日の観察メモを残すアプリです。
+    </p>
+
+    <div class="cta-buttons">
+      <a href="#download" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        最新プレビュー版を入手
+      </a>
+      <a href="https://github.com/AIGameCreators/nocoro-public" target="_blank" class="btn btn-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        GitHub リポジトリ
+      </a>
+    </div>
+
+    <div class="hero-meta">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+      <span>Windows 10 / 11 対応 (Preview)</span>
+    </div>
+  </section>
+
+  <!-- Showcase / Features Section -->
+  <section id="features" class="container" style="padding-bottom: 80px;">
+    <h2 class="section-title">Nocoro でできること</h2>
+    <p class="section-subtitle">有能な秘書ではありませんが、静かにあなたのそばに寄り添います。</p>
+
+    <div class="features-grid">
+      <!-- Feature 1 -->
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="21" x2="9" y2="9"></line><line x1="3" y1="9" x2="21" y2="9"></line></svg>
+        </div>
+        <h3>デスクトップのすみで小さく常駐</h3>
+        <p>画面の右下など、作業の邪魔にならないすみっこに静かに留まります。ゆっくりとした瞬きや呼吸のような仕草で、かすかな「気配」を感じさせてくれます。</p>
+        <div class="feature-image-wrapper">
+          <img src="assets/01-desktop-corner.png" alt="デスクトップ常駐">
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <h3>時間帯や区切りに短く反応</h3>
+        <p>あなたが戻ってきたとき、深夜に作業を頑張っているとき、あるいは区切りがついたときに、短く吹き出しで声をかけます。無用な通知で作業を遮ることはありません。</p>
+        <div class="feature-image-wrapper">
+          <img src="assets/02-short-reaction.png" alt="短い反応">
+        </div>
+      </div>
+
+      <!-- Feature 3 (Full Width Layout for Today's Note) -->
+      <div class="features-grid-full">
+        <div class="feature-card" style="grid-column: span 2; display: flex; flex-direction: row; align-items: center; gap: 40px; text-align: left;">
+          <div style="flex: 1;">
+            <div class="feature-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
+            <h3>今日の観察メモと住人メモ</h3>
+            <p>Nocoroはあなたがどんな一日を過ごしていたかを緩やかに見守り、小さな「観察メモ」を残します。今日の頑張りや、よく使ったアプリなどの変化を後からふり返ることができます。</p>
+          </div>
+          <div class="feature-image-wrapper" style="flex: 1; max-width: 480px; margin-top: 0;">
+            <img src="assets/05-today-observation-note.png" alt="今日の観察メモ">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Safety & Privacy Section -->
+  <section id="safety" class="container">
+    <div class="safety-section">
+      <h3 class="safety-section-title">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-accent-green);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        安心して一緒に過ごすために
+      </h3>
+      <p style="text-align: center; color: var(--color-text-muted); max-width: 680px; margin: -20px auto 40px; font-weight: 500;">
+        「勝手に何かするのではないか」「監視されているのではないか」といった不安をなくし、安全で心地よい関係であり続けるための仕様設計を行っています。<br>
+        詳しくはリポジトリの <a href="https://github.com/AIGameCreators/nocoro-public/blob/main/docs/safety.md" target="_blank" style="text-decoration: underline; font-weight: 700;">安全設計 (safety.md)</a> や <a href="https://github.com/AIGameCreators/nocoro-public/blob/main/docs/privacy.md" target="_blank" style="text-decoration: underline; font-weight: 700;">プライバシーポリシー (privacy.md)</a> をご覧ください。
+      </p>
+
+      <div class="safety-grid">
+        <!-- Safety 1 -->
+        <div class="safety-item">
+          <div class="safety-icon">✓</div>
+          <div class="safety-content">
+            <h4>画面を常時監視しません</h4>
+            <p>画面情報の読み取りは常時ではなく、あなたが「見てもらう」ボタンを押したときや、明示的な操作が行われた瞬間にのみ一時的に実施します。</p>
+          </div>
+        </div>
+        <!-- Safety 2 -->
+        <div class="safety-item">
+          <div class="safety-icon">✓</div>
+          <div class="safety-content">
+            <h4>ローカル重視・透過的な保存</h4>
+            <p>Nocoroが記録した観察メモや設定は、PCのローカル環境に保存されます。記録内容はいつでもユーザー自身で確認でき、削除することも可能です。</p>
+          </div>
+        </div>
+        <!-- Safety 3 -->
+        <div class="safety-item">
+          <div class="safety-icon">✓</div>
+          <div class="safety-content">
+            <h4>既存ファイルは編集しません</h4>
+            <p>Nocoroが書き出すのは専用のデータフォルダ内のファイルだけです。あなたのPCにある既存のコードやドキュメントを勝手に書き換えることはありません。</p>
+          </div>
+        </div>
+        <!-- Safety 4 -->
+        <div class="safety-item">
+          <div class="safety-icon">✓</div>
+          <div class="safety-content">
+            <h4>害のない穏やかな自律性</h4>
+            <p>ひとりでメモを書いたり、表情を変えたりといった住人の自律行動は、PCの動作を重くしたり、業務に支障を出したりしない軽量な仕様です。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download & Specs Section -->
+  <section id="download" class="container">
+    <div class="download-card">
+      <h2>Nocoro をダウンロード</h2>
+      <p class="subtitle">現在は Windows 向けプレビュー版として、GitHub にて実行ファイルを公開しています。</p>
+
+      <div style="margin-bottom: 24px;">
+        <a href="https://github.com/AIGameCreators/nocoro-public/releases" target="_blank" class="btn btn-primary" style="padding: 18px 48px; font-size: 1.2rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Releases からダウンロード (GitHub)
+        </a>
+      </div>
+
+      <p style="font-size: 0.9rem; color: var(--color-text-muted); max-width: 640px; margin: 0 auto 10px;">
+        ※プレビュー版のため、仕様や表示、保存形式は今後変更される可能性があります。<br>
+        導入手順は <a href="https://github.com/AIGameCreators/nocoro-public/blob/main/docs/install.md" target="_blank" style="text-decoration: underline; font-weight: 700;">インストールガイド (install.md)</a> を、困ったときは <a href="https://github.com/AIGameCreators/nocoro-public/blob/main/docs/known-issues.md" target="_blank" style="text-decoration: underline; font-weight: 700;">既知の制限 (known-issues.md)</a> をご参照ください。<br>
+        また、AIとの接続には Ollama 等のローカルLLM環境（既定: gemma3:4b）との連携に対応しています。
+      </p>
+
+      <div class="spec-badges">
+        <span class="spec-badge">OS: Windows 10 / 11 (64bit)</span>
+        <span class="spec-badge">LLM: Ollama (gemma3:4b) 等に対応</span>
+        <span class="spec-badge">Framework: Tauri + SvelteKit + Rust</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/AIGameCreators/nocoro-public" target="_blank">GitHub</a>
+        <a href="https://github.com/AIGameCreators/nocoro-public/issues" target="_blank">不具合報告・要望</a>
+        <a href="https://github.com/AIGameCreators/nocoro-public/blob/main/docs/privacy.md" target="_blank">プライバシーポリシー</a>
+        <a href="https://github.com/AIGameCreators/nocoro-public/blob/main/docs/faq.md" target="_blank">よくある質問 (FAQ)</a>
+      </div>
+      <p class="copyright">&copy; 2026 Nocoro Project. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Script for periodic text changes in speech balloon -->
+  <script>
+    const lines = [
+      "ねえねえ、今日も作る日っぽいね",
+      "ちょっとひとやすみ、しよ？",
+      "ずっと画面をみてるね。がんばり屋さんだ",
+      "PCのすみにいるよ。気にしないでね",
+      "おかえり！どこにいってたの？",
+      "今日の観察メモ、こっそり書いておくね",
+      "ふあぁ… ちょっと眠くなってきたかも",
+      "なにかおもしろいこと考えてる？",
+      "キーボードの音がここちいいなぁ"
+    ];
+
+    const balloon = document.getElementById('baloon-text');
+    let lastIndex = 0;
+
+    function changeLine() {
+      // Choose next line randomly, ensuring it's different from the last one
+      let newIndex = lastIndex;
+      while (newIndex === lastIndex) {
+        newIndex = Math.floor(Math.random() * lines.length);
+      }
+      lastIndex = newIndex;
+
+      // Temporary slide out / fade out before text change
+      balloon.style.opacity = 0;
+      balloon.style.transform = 'scale(0.8) translate(-10px, 10px)';
+
+      setTimeout(() => {
+        balloon.innerText = lines[newIndex];
+        // Trigger animations again
+        balloon.style.opacity = 1;
+        balloon.style.transform = 'scale(1) translate(0, 0)';
+      }, 500);
+    }
+
+    // Change balloon text every 12 seconds (matching CSS animation intervals)
+    setInterval(changeLine, 12000);
+
+    // Initial trigger just to ensure the script works
+    setTimeout(() => {
+      balloon.style.opacity = 1;
+      balloon.style.transform = 'scale(1) translate(0, 0)';
+    }, 100);
+  </script>
+
+</body>
+</html>
