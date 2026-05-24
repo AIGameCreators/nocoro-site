@@ -180,6 +180,7 @@
       border: 2px solid var(--color-cream-border);
       border-radius: 20px;
       padding: 12px 20px;
+      width: max-content;
       max-width: 250px;
       box-shadow: 0 8px 20px rgba(100, 149, 237, 0.1);
       font-weight: 500;
@@ -190,7 +191,8 @@
       transform: scale(0.8) translate(-10px, 10px);
       transform-origin: bottom left;
       animation: popBalloon 12s ease-in-out infinite;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: break-word;
     }
 
     .speech-balloon::before {
